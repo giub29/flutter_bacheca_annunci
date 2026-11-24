@@ -158,4 +158,66 @@ class ApiClient {
 
     return dati;
   }
+
+  Future<List<Annuncio>> getMieiAnnunci() async {
+    final sessionToken = token;
+
+    if (sessionToken == null || sessionToken.isEmpty) {
+      throw const ApiException(401, 'Accesso richiesto.');
+    }
+
+    final uri = Uri.parse(
+      '${ApiConfig.baseUrl}/api/azienda/annunci',
+    );
+
+    final risposta = await http.get(
+      uri,
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $sessionToken',
+      },
+    ).timeout(ApiConfig.timeout);
+
+    final testo = utf8.decode(risposta.bodyBytes);
+
+    if (risposta.statusCode >= 400) {
+      String messaggio = 'Errore del server (${risposta.statusCode}).';
+
+      try {
+        final errore = jsonDecode(testo);
+
+        if (errore is Map<String, dynamic> &&
+            errore['error'] is String) {
+          messaggio = errore['error'] as String;
+        }
+      } on FormatException {
+        // Manteniamo il messaggio generico.
+      }
+
+      throw ApiException(risposta.statusCode, messaggio);
+    }
+
+    if (risposta.statusCode != 200) {
+      throw ApiException(
+        risposta.statusCode,
+        'Risposta HTTP inattesa.',
+      );
+    }
+
+    final dati = jsonDecode(testo);
+
+    if (dati is! List) {
+      throw const FormatException(
+        'La risposta deve contenere una lista di annunci.',
+      );
+    }
+
+    return dati.map((elemento) {
+      if (elemento is! Map<String, dynamic>) {
+        throw const FormatException('Formato annuncio non valido.');
+      }
+
+      return Annuncio.fromJson(elemento);
+    }).toList();
+  }
 }

@@ -5,6 +5,7 @@ import 'providers/auth_provider.dart';
 import 'screens/annuncio_detail_screen.dart';
 import 'services/api_client.dart';
 import 'screens/register_screen.dart';
+import 'screens/login_screen.dart';
 
 void main() {
   runApp(
@@ -82,6 +83,29 @@ class _BachecaScreenState extends State<BachecaScreen> {
     );
   }
 
+  Future<void> _apriLogin() async {
+    final accessoRiuscito = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute<bool>(
+        builder: (context) => const LoginScreen(),
+      ),
+    );
+
+    if (!mounted) return;
+
+    if (accessoRiuscito == true) {
+      final azienda = context.read<AuthProvider>().azienda;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Accesso effettuato: ${azienda!.nome}',
+          ),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -97,6 +121,11 @@ class _BachecaScreenState extends State<BachecaScreen> {
             onPressed: _ricarica,
             icon: const Icon(Icons.refresh),
             tooltip: 'Aggiorna annunci',
+          ),
+          IconButton(
+            onPressed: _apriLogin,
+            icon: const Icon(Icons.login),
+            tooltip: 'Accedi come azienda',
           ),
         ],
       ),
