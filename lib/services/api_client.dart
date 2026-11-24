@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import '../models/annuncio.dart';
 import '../config/api_config.dart';
 import '../models/azienda.dart';
+import '../models/candidatura.dart';
 
 class ApiException implements Exception {
   final int statusCode;
@@ -297,5 +298,63 @@ class ApiClient {
     }
 
     return id;
+  }
+
+  Future<List<Candidatura>> getCandidature(int annuncioId) async {
+    final sessionToken = token;
+
+    if (sessionToken == null || sessionToken.isEmpty) {
+      throw const ApiException(401, 'Accesso richiesto.');
+    }
+
+    final uri = Uri.parse(
+      '${ApiConfig.baseUrl}/api/annunci/$annuncioId/candidature',
+    );
+
+    final risposta = await http
+        .get(
+          uri,
+          headers: {
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $sessionToken',
+          },
+        )
+        .timeout(ApiConfig.timeout);
+
+    final testo = utf8.decode(risposta.bodyBytes);
+
+    if (risposta.statusCode != 200) {
+      String messaggio =
+          'Impossibile caricare le candidature '
+          '(${risposta.statusCode}).';
+
+      try {
+        final errore = jsonDecode(testo);
+
+        if (errore is Map<String, dynamic> && errore['error'] is String) {
+          messaggio = errore['error'] as String;
+        }
+      } on FormatException {
+        // Manteniamo il messaggio generico.
+      }
+
+      throw ApiException(risposta.statusCode, messaggio);
+    }
+
+    final dati = jsonDecode(testo);
+
+    if (dati is! List) {
+      throw const FormatException(
+        'La risposta deve contenere una lista di candidature.',
+      );
+    }
+
+    return dati.map((elemento) {
+      if (elemento is! Map<String, dynamic>) {
+        throw const FormatException('Formato candidatura non valido.');
+      }
+
+      return Candidatura.fromJson(elemento);
+    }).toList();
   }
 }
