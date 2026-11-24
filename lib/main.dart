@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+
 import 'services/api_client.dart';
 import 'models/annuncio.dart';
+import 'screens/annuncio_detail_screen.dart';
 
 void main() {
   runApp(const BachecaLavoroApp());
@@ -15,9 +17,7 @@ class BachecaLavoroApp extends StatelessWidget {
       title: 'Bacheca lavoro',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.blue,
-        ),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
       ),
       home: const BachecaScreen(),
     );
@@ -64,9 +64,7 @@ class _BachecaScreenState extends State<BachecaScreen> {
         future: _annunci,
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+            return const Center(child: CircularProgressIndicator());
           }
 
           if (snapshot.hasError) {
@@ -78,7 +76,7 @@ class _BachecaScreenState extends State<BachecaScreen> {
                   children: [
                     const Text(
                       'Impossibile caricare gli annunci. '
-                          'Controlla la connessione al server.',
+                      'Controlla la connessione al server.',
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 16),
@@ -95,9 +93,7 @@ class _BachecaScreenState extends State<BachecaScreen> {
           final annunci = snapshot.data!;
 
           if (annunci.isEmpty) {
-            return const Center(
-              child: Text('Nessun annuncio disponibile.'),
-            );
+            return const Center(child: Text('Nessun annuncio disponibile.'));
           }
 
           return ListView.builder(
@@ -112,6 +108,17 @@ class _BachecaScreenState extends State<BachecaScreen> {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute<void>(
+                      builder: (context) {
+                        return AnnuncioDetailScreen(annuncio: annuncio);
+                      },
+                    ),
+                  );
+                },
               );
             },
           );
