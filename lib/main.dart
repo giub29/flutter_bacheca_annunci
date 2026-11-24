@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'services/api_client.dart';
+import 'models/annuncio.dart';
 
 void main() {
   runApp(const BachecaLavoroApp());
@@ -32,17 +33,17 @@ class BachecaScreen extends StatefulWidget {
 
 class _BachecaScreenState extends State<BachecaScreen> {
   final ApiClient _api = ApiClient();
-  late Future<bool> _connessione;
+  late Future<List<Annuncio>> _annunci;
 
   @override
   void initState() {
     super.initState();
-    _connessione = _api.verificaConnessione();
+    _annunci = _api.getAnnunci();
   }
 
-  void _riprova() {
+  void _ricarica() {
     setState(() {
-      _connessione = _api.verificaConnessione();
+      _annunci = _api.getAnnunci();
     });
   }
 
@@ -51,43 +52,70 @@ class _BachecaScreenState extends State<BachecaScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Bacheca lavoro'),
+        actions: [
+          IconButton(
+            onPressed: _ricarica,
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Aggiorna annunci',
+          ),
+        ],
       ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: FutureBuilder<bool>(
-            future: _connessione,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState != ConnectionState.done) {
-                return const CircularProgressIndicator();
-              }
+      body: FutureBuilder<List<Annuncio>>(
+        future: _annunci,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState != ConnectionState.done) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
 
-              if (snapshot.hasError) {
-                return Column(
+          if (snapshot.hasError) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Text(
-                      'Impossibile verificare la connessione. '
-                          'Controlla che il server sia avviato.',
+                      'Impossibile caricare gli annunci. '
+                          'Controlla la connessione al server.',
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 16),
                     ElevatedButton(
-                      onPressed: _riprova,
+                      onPressed: _ricarica,
                       child: const Text('Riprova'),
                     ),
                   ],
-                );
-              }
+                ),
+              ),
+            );
+          }
 
-              return const Text(
-                'Connessione al server riuscita.\n'
-                    'Gli annunci di lavoro saranno mostrati qui.',
-                textAlign: TextAlign.center,
+          final annunci = snapshot.data!;
+
+          if (annunci.isEmpty) {
+            return const Center(
+              child: Text('Nessun annuncio disponibile.'),
+            );
+          }
+
+          return ListView.builder(
+            itemCount: annunci.length,
+            itemBuilder: (context, index) {
+              final annuncio = annunci[index];
+
+              return ListTile(
+                title: Text(annuncio.titolo),
+                subtitle: Text(
+                  annuncio.descrizione,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
               );
             },
-          ),
-        ),
+          );
+        },
       ),
     );
   }
