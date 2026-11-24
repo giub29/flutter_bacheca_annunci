@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../models/annuncio.dart';
 import '../providers/auth_provider.dart';
 import '../services/api_client.dart';
 import 'annuncio_form_screen.dart';
+import 'candidature_screen.dart';
 
 class MieiAnnunciScreen extends StatefulWidget {
   const MieiAnnunciScreen({super.key});
@@ -34,9 +36,7 @@ class _MieiAnnunciScreenState extends State<MieiAnnunciScreen> {
   Future<void> _apriNuovoAnnuncio() async {
     final pubblicato = await Navigator.push<bool>(
       context,
-      MaterialPageRoute<bool>(
-        builder: (context) => const AnnuncioFormScreen(),
-      ),
+      MaterialPageRoute<bool>(builder: (context) => const AnnuncioFormScreen()),
     );
 
     if (!mounted) return;
@@ -44,11 +44,8 @@ class _MieiAnnunciScreenState extends State<MieiAnnunciScreen> {
     if (pubblicato == true) {
       _ricarica();
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Annuncio pubblicato.'),
-        ),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Annuncio pubblicato.')));
     }
   }
 
@@ -70,9 +67,8 @@ class _MieiAnnunciScreenState extends State<MieiAnnunciScreen> {
     } on ApiException catch (errore) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(errore.message)),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(errore.message)));
     } catch (_) {
       if (!mounted) return;
 
@@ -80,7 +76,7 @@ class _MieiAnnunciScreenState extends State<MieiAnnunciScreen> {
         const SnackBar(
           content: Text(
             'Logout non completato. '
-                'Controlla la connessione e riprova.',
+            'Controlla la connessione e riprova.',
           ),
         ),
       );
@@ -99,12 +95,8 @@ class _MieiAnnunciScreenState extends State<MieiAnnunciScreen> {
 
     if (!auth.isLoggedIn) {
       return Scaffold(
-        appBar: AppBar(
-          title: const Text('Area azienda'),
-        ),
-        body: const Center(
-          child: Text('Effettua il login per accedere.'),
-        ),
+        appBar: AppBar(title: const Text('Area azienda')),
+        body: const Center(child: Text('Effettua il login per accedere.')),
       );
     }
 
@@ -133,9 +125,7 @@ class _MieiAnnunciScreenState extends State<MieiAnnunciScreen> {
         future: _annunci,
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+            return const Center(child: CircularProgressIndicator());
           }
 
           if (snapshot.hasError) {
@@ -151,10 +141,7 @@ class _MieiAnnunciScreenState extends State<MieiAnnunciScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      messaggio,
-                      textAlign: TextAlign.center,
-                    ),
+                    Text(messaggio, textAlign: TextAlign.center),
                     const SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: _ricarica,
@@ -186,6 +173,19 @@ class _MieiAnnunciScreenState extends State<MieiAnnunciScreen> {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: _uscitaInCorso
+                    ? null
+                    : () {
+                        Navigator.push<void>(
+                          context,
+                          MaterialPageRoute<void>(
+                            builder: (context) {
+                              return CandidatureScreen(annuncio: annuncio);
+                            },
+                          ),
+                        );
+                      },
               );
             },
           );
