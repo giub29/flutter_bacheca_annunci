@@ -1,11 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
-import 'services/api_client.dart';
 import 'models/annuncio.dart';
+import 'providers/auth_provider.dart';
 import 'screens/annuncio_detail_screen.dart';
+import 'services/api_client.dart';
 
 void main() {
-  runApp(const BachecaLavoroApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        Provider<ApiClient>(
+          create: (_) => ApiClient(),
+        ),
+        ChangeNotifierProvider<AuthProvider>(
+          create: (context) => AuthProvider(
+            context.read<ApiClient>(),
+          ),
+        ),
+      ],
+      child: const BachecaLavoroApp(),
+    ),
+  );
 }
 
 class BachecaLavoroApp extends StatelessWidget {
@@ -32,12 +48,14 @@ class BachecaScreen extends StatefulWidget {
 }
 
 class _BachecaScreenState extends State<BachecaScreen> {
-  final ApiClient _api = ApiClient();
+  late final ApiClient _api;
   late Future<List<Annuncio>> _annunci;
 
   @override
   void initState() {
     super.initState();
+
+    _api = context.read<ApiClient>();
     _annunci = _api.getAnnunci();
   }
 
