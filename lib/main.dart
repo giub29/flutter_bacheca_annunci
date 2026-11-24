@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import 'models/annuncio.dart';
 import 'providers/auth_provider.dart';
 import 'screens/annuncio_detail_screen.dart';
 import 'services/api_client.dart';
+import 'screens/register_screen.dart';
 
 void main() {
   runApp(
@@ -65,12 +65,34 @@ class _BachecaScreenState extends State<BachecaScreen> {
     });
   }
 
+  Future<void> _apriRegistrazione() async {
+    final registrata = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute<bool>(
+        builder: (context) => const RegisterScreen(),
+      ),
+    );
+
+    if (!mounted || registrata != true) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Account creato. Ora puoi effettuare il login.'),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Bacheca lavoro'),
         actions: [
+          IconButton(
+            onPressed: _apriRegistrazione,
+            icon: const Icon(Icons.person_add),
+            tooltip: 'Registra azienda',
+          ),
           IconButton(
             onPressed: _ricarica,
             icon: const Icon(Icons.refresh),
