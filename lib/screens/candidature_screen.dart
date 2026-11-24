@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../models/annuncio.dart';
 import '../models/candidatura.dart';
 import '../services/api_client.dart';
+import 'candidatura_detail_screen.dart';
 
 class CandidatureScreen extends StatefulWidget {
   final Annuncio annuncio;
@@ -103,11 +104,21 @@ class _CandidatureScreenState extends State<CandidatureScreen> {
                     final candidatura = candidature[index];
 
                     return ListTile(
-                      title: Text(
-                        '${candidatura.nome} '
-                        '${candidatura.cognome}',
-                      ),
+                      title: Text('${candidatura.nome} ${candidatura.cognome}'),
                       subtitle: Text(candidatura.email),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () {
+                        Navigator.push<void>(
+                          context,
+                          MaterialPageRoute<void>(
+                            builder: (context) {
+                              return CandidaturaDetailScreen(
+                                candidatura: candidatura,
+                              );
+                            },
+                          ),
+                        );
+                      },
                     );
                   },
                 );
