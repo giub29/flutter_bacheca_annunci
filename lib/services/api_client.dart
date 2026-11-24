@@ -357,4 +357,62 @@ class ApiClient {
       return Candidatura.fromJson(elemento);
     }).toList();
   }
+
+  Future<List<int>> scaricaCv(int candidaturaId) async {
+    final sessionToken = token;
+
+    if (sessionToken == null || sessionToken.isEmpty) {
+      throw const ApiException(401, 'Accesso richiesto.');
+    }
+
+    final uri = Uri.parse(
+      '${ApiConfig.baseUrl}/api/candidature/$candidaturaId/cv',
+    );
+
+    final risposta = await http
+        .get(
+          uri,
+          headers: {
+            'Accept': 'application/pdf',
+            'Authorization': 'Bearer $sessionToken',
+          },
+        )
+        .timeout(ApiConfig.timeout);
+
+    if (risposta.statusCode != 200) {
+      String messaggio =
+          'Impossibile scaricare il curriculum '
+          '(${risposta.statusCode}).';
+
+      try {
+        final errore = jsonDecode(utf8.decode(risposta.bodyBytes));
+
+        if (errore is Map<String, dynamic> && errore['error'] is String) {
+          messaggio = errore['error'] as String;
+        }
+      } on FormatException {
+        // Manteniamo il messaggio generico.
+      }
+
+      throw ApiException(risposta.statusCode, messaggio);
+    }
+
+    final tipo = risposta.headers['content-type']
+        ?.split(';')
+        .first
+        .trim()
+        .toLowerCase();
+
+    if (tipo != 'application/pdf') {
+      throw const FormatException('Il server non ha restituito un PDF.');
+    }
+
+    final bytes = risposta.bodyBytes;
+
+    if (bytes.isEmpty) {
+      throw const FormatException('Il curriculum ricevuto è vuoto.');
+    }
+
+    return bytes;
+  }
 }
