@@ -45,4 +45,13 @@ class AuthProvider extends ChangeNotifier {
       password: password,
     );
   }
+
+  Future<void> logout() async {
+    await _api.logout();
+
+    _api.token = null;
+    _azienda = null;
+
+    notifyListeners();
+  }
 }

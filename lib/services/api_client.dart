@@ -82,6 +82,46 @@ class ApiClient {
     return Azienda.fromJson(dati);
   }
 
+  Future<void> logout() async {
+    final sessionToken = token;
+
+    if (sessionToken == null) return;
+
+    final uri = Uri.parse(
+      '${ApiConfig.baseUrl}/api/auth/logout',
+    );
+
+    final risposta = await http.post(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $sessionToken',
+        'Accept': 'application/json',
+      },
+    ).timeout(ApiConfig.timeout);
+
+    if (risposta.statusCode == 204 ||
+        risposta.statusCode == 401) {
+      return;
+    }
+
+    String messaggio = 'Impossibile completare il logout.';
+
+    try {
+      final dati = jsonDecode(
+        utf8.decode(risposta.bodyBytes),
+      );
+
+      if (dati is Map<String, dynamic> &&
+          dati['error'] is String) {
+        messaggio = dati['error'] as String;
+      }
+    } on FormatException {
+      // Manteniamo il messaggio generico.
+    }
+
+    throw ApiException(risposta.statusCode, messaggio);
+  }
+
   Future<Map<String, dynamic>> login({
     required String email,
     required String password,
@@ -246,4 +286,5 @@ class ApiClient {
       return Annuncio.fromJson(elemento);
     }).toList();
   }
+
 }
