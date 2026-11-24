@@ -6,6 +6,7 @@ import 'screens/annuncio_detail_screen.dart';
 import 'services/api_client.dart';
 import 'screens/register_screen.dart';
 import 'screens/login_screen.dart';
+import 'screens/miei_annunci_screen.dart';
 
 void main() {
   runApp(
@@ -94,38 +95,53 @@ class _BachecaScreenState extends State<BachecaScreen> {
     if (!mounted) return;
 
     if (accessoRiuscito == true) {
-      final azienda = context.read<AuthProvider>().azienda;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Accesso effettuato: ${azienda!.nome}',
-          ),
-        ),
-      );
+      await _apriAreaAzienda();
     }
+  }
+
+  Future<void> _apriAreaAzienda() async {
+    await Navigator.push<void>(
+      context,
+      MaterialPageRoute<void>(
+        builder: (context) => const MieiAnnunciScreen(),
+      ),
+    );
+
+    if (!mounted) return;
+
+    _ricarica();
   }
 
   @override
   Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Bacheca lavoro'),
         actions: [
-          IconButton(
-            onPressed: _apriRegistrazione,
-            icon: const Icon(Icons.person_add),
-            tooltip: 'Registra azienda',
-          ),
+          if (!auth.isLoggedIn)
+            IconButton(
+              onPressed: _apriRegistrazione,
+              icon: const Icon(Icons.person_add),
+              tooltip: 'Registra azienda',
+            ),
+          if (!auth.isLoggedIn)
+            IconButton(
+              onPressed: _apriLogin,
+              icon: const Icon(Icons.login),
+              tooltip: 'Accedi come azienda',
+            ),
+          if (auth.isLoggedIn)
+            IconButton(
+              onPressed: _apriAreaAzienda,
+              icon: const Icon(Icons.business),
+              tooltip: 'Area azienda',
+            ),
           IconButton(
             onPressed: _ricarica,
             icon: const Icon(Icons.refresh),
             tooltip: 'Aggiorna annunci',
-          ),
-          IconButton(
-            onPressed: _apriLogin,
-            icon: const Icon(Icons.login),
-            tooltip: 'Accedi come azienda',
           ),
         ],
       ),

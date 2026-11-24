@@ -106,9 +106,17 @@ class ApiClient {
   }
 
   Future<Map<String, dynamic>> _post(
-      String path,
-      Map<String, dynamic> body,
-      ) async {
+    String path,
+    Map<String, dynamic> body, {
+    bool autenticata = false,
+    }) async {
+    final sessionToken = token;
+
+    if (autenticata &&
+        (sessionToken == null || sessionToken.isEmpty)) {
+      throw const ApiException(401, 'Accesso richiesto.');
+    }
+
     final uri = Uri.parse('${ApiConfig.baseUrl}$path');
 
     final risposta = await http
@@ -117,6 +125,8 @@ class ApiClient {
       headers: {
         'Content-Type': 'application/json; charset=utf-8',
         'Accept': 'application/json',
+        if (autenticata)
+          'Authorization': 'Bearer $sessionToken',
       },
       body: jsonEncode(body),
     )
@@ -157,6 +167,22 @@ class ApiClient {
     }
 
     return dati;
+  }
+
+  Future<Annuncio> creaAnnuncio({
+    required String titolo,
+    required String descrizione,
+  }) async {
+    final dati = await _post(
+      '/api/annunci',
+      {
+        'titolo': titolo.trim(),
+        'descrizione': descrizione.trim(),
+      },
+      autenticata: true,
+    );
+
+    return Annuncio.fromJson(dati);
   }
 
   Future<List<Annuncio>> getMieiAnnunci() async {
