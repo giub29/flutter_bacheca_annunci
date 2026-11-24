@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../models/annuncio.dart';
 import '../providers/auth_provider.dart';
 import '../services/api_client.dart';
+import 'annuncio_form_screen.dart';
 
 class MieiAnnunciScreen extends StatefulWidget {
   const MieiAnnunciScreen({super.key});
@@ -29,6 +30,27 @@ class _MieiAnnunciScreenState extends State<MieiAnnunciScreen> {
     });
   }
 
+  Future<void> _apriNuovoAnnuncio() async {
+    final pubblicato = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute<bool>(
+        builder: (context) => const AnnuncioFormScreen(),
+      ),
+    );
+
+    if (!mounted) return;
+
+    if (pubblicato == true) {
+      _ricarica();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Annuncio pubblicato.'),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
@@ -52,6 +74,11 @@ class _MieiAnnunciScreenState extends State<MieiAnnunciScreen> {
             onPressed: _ricarica,
             icon: const Icon(Icons.refresh),
             tooltip: 'Aggiorna i miei annunci',
+          ),
+          IconButton(
+            onPressed: _apriNuovoAnnuncio,
+            icon: const Icon(Icons.add),
+            tooltip: 'Nuovo annuncio',
           ),
         ],
       ),
