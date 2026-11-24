@@ -1,5 +1,7 @@
 import 'dart:convert';
+
 import 'package:http/http.dart' as http;
+
 import '../models/annuncio.dart';
 import '../config/api_config.dart';
 import '../models/azienda.dart';
@@ -26,9 +28,7 @@ class ApiClient {
       throw Exception('Il server ha restituito un errore.');
     }
 
-    final dati = jsonDecode(
-      utf8.decode(risposta.bodyBytes),
-    );
+    final dati = jsonDecode(utf8.decode(risposta.bodyBytes));
 
     if (dati is! Map || dati['status'] != 'ok') {
       throw Exception('Risposta del server non valida.');
@@ -46,9 +46,7 @@ class ApiClient {
       throw Exception('Impossibile caricare gli annunci.');
     }
 
-    final dati = jsonDecode(
-      utf8.decode(risposta.bodyBytes),
-    );
+    final dati = jsonDecode(utf8.decode(risposta.bodyBytes));
 
     if (dati is! List) {
       throw const FormatException(
@@ -70,14 +68,11 @@ class ApiClient {
     required String email,
     required String password,
   }) async {
-    final dati = await _post(
-      '/api/auth/register',
-      {
-        'nome': nome.trim(),
-        'email': email.trim(),
-        'password': password,
-      },
-    );
+    final dati = await _post('/api/auth/register', {
+      'nome': nome.trim(),
+      'email': email.trim(),
+      'password': password,
+    });
 
     return Azienda.fromJson(dati);
   }
@@ -87,32 +82,28 @@ class ApiClient {
 
     if (sessionToken == null) return;
 
-    final uri = Uri.parse(
-      '${ApiConfig.baseUrl}/api/auth/logout',
-    );
+    final uri = Uri.parse('${ApiConfig.baseUrl}/api/auth/logout');
 
-    final risposta = await http.post(
-      uri,
-      headers: {
-        'Authorization': 'Bearer $sessionToken',
-        'Accept': 'application/json',
-      },
-    ).timeout(ApiConfig.timeout);
+    final risposta = await http
+        .post(
+          uri,
+          headers: {
+            'Authorization': 'Bearer $sessionToken',
+            'Accept': 'application/json',
+          },
+        )
+        .timeout(ApiConfig.timeout);
 
-    if (risposta.statusCode == 204 ||
-        risposta.statusCode == 401) {
+    if (risposta.statusCode == 204 || risposta.statusCode == 401) {
       return;
     }
 
     String messaggio = 'Impossibile completare il logout.';
 
     try {
-      final dati = jsonDecode(
-        utf8.decode(risposta.bodyBytes),
-      );
+      final dati = jsonDecode(utf8.decode(risposta.bodyBytes));
 
-      if (dati is Map<String, dynamic> &&
-          dati['error'] is String) {
+      if (dati is Map<String, dynamic> && dati['error'] is String) {
         messaggio = dati['error'] as String;
       }
     } on FormatException {
@@ -126,20 +117,15 @@ class ApiClient {
     required String email,
     required String password,
   }) async {
-    final dati = await _post(
-      '/api/auth/login',
-      {
-        'email': email.trim(),
-        'password': password,
-      },
-    );
+    final dati = await _post('/api/auth/login', {
+      'email': email.trim(),
+      'password': password,
+    });
 
     if (dati['token'] is! String ||
         (dati['token'] as String).isEmpty ||
         dati['azienda'] is! Map<String, dynamic>) {
-      throw const FormatException(
-        'Risposta di login non valida.',
-      );
+      throw const FormatException('Risposta di login non valida.');
     }
 
     return dati;
@@ -149,11 +135,10 @@ class ApiClient {
     String path,
     Map<String, dynamic> body, {
     bool autenticata = false,
-    }) async {
+  }) async {
     final sessionToken = token;
 
-    if (autenticata &&
-        (sessionToken == null || sessionToken.isEmpty)) {
+    if (autenticata && (sessionToken == null || sessionToken.isEmpty)) {
       throw const ApiException(401, 'Accesso richiesto.');
     }
 
@@ -161,15 +146,14 @@ class ApiClient {
 
     final risposta = await http
         .post(
-      uri,
-      headers: {
-        'Content-Type': 'application/json; charset=utf-8',
-        'Accept': 'application/json',
-        if (autenticata)
-          'Authorization': 'Bearer $sessionToken',
-      },
-      body: jsonEncode(body),
-    )
+          uri,
+          headers: {
+            'Content-Type': 'application/json; charset=utf-8',
+            'Accept': 'application/json',
+            if (autenticata) 'Authorization': 'Bearer $sessionToken',
+          },
+          body: jsonEncode(body),
+        )
         .timeout(ApiConfig.timeout);
 
     final testo = utf8.decode(risposta.bodyBytes);
@@ -180,8 +164,7 @@ class ApiClient {
       try {
         final errore = jsonDecode(testo);
 
-        if (errore is Map<String, dynamic> &&
-            errore['error'] is String) {
+        if (errore is Map<String, dynamic> && errore['error'] is String) {
           messaggio = errore['error'] as String;
         }
       } on FormatException {
@@ -192,10 +175,7 @@ class ApiClient {
     }
 
     if (risposta.statusCode < 200 || risposta.statusCode >= 300) {
-      throw ApiException(
-        risposta.statusCode,
-        'Risposta HTTP inattesa.',
-      );
+      throw ApiException(risposta.statusCode, 'Risposta HTTP inattesa.');
     }
 
     final dati = jsonDecode(testo);
@@ -213,14 +193,10 @@ class ApiClient {
     required String titolo,
     required String descrizione,
   }) async {
-    final dati = await _post(
-      '/api/annunci',
-      {
-        'titolo': titolo.trim(),
-        'descrizione': descrizione.trim(),
-      },
-      autenticata: true,
-    );
+    final dati = await _post('/api/annunci', {
+      'titolo': titolo.trim(),
+      'descrizione': descrizione.trim(),
+    }, autenticata: true);
 
     return Annuncio.fromJson(dati);
   }
@@ -232,17 +208,17 @@ class ApiClient {
       throw const ApiException(401, 'Accesso richiesto.');
     }
 
-    final uri = Uri.parse(
-      '${ApiConfig.baseUrl}/api/azienda/annunci',
-    );
+    final uri = Uri.parse('${ApiConfig.baseUrl}/api/azienda/annunci');
 
-    final risposta = await http.get(
-      uri,
-      headers: {
-        'Accept': 'application/json',
-        'Authorization': 'Bearer $sessionToken',
-      },
-    ).timeout(ApiConfig.timeout);
+    final risposta = await http
+        .get(
+          uri,
+          headers: {
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $sessionToken',
+          },
+        )
+        .timeout(ApiConfig.timeout);
 
     final testo = utf8.decode(risposta.bodyBytes);
 
@@ -252,8 +228,7 @@ class ApiClient {
       try {
         final errore = jsonDecode(testo);
 
-        if (errore is Map<String, dynamic> &&
-            errore['error'] is String) {
+        if (errore is Map<String, dynamic> && errore['error'] is String) {
           messaggio = errore['error'] as String;
         }
       } on FormatException {
@@ -264,10 +239,7 @@ class ApiClient {
     }
 
     if (risposta.statusCode != 200) {
-      throw ApiException(
-        risposta.statusCode,
-        'Risposta HTTP inattesa.',
-      );
+      throw ApiException(risposta.statusCode, 'Risposta HTTP inattesa.');
     }
 
     final dati = jsonDecode(testo);
@@ -287,4 +259,43 @@ class ApiClient {
     }).toList();
   }
 
+  Future<int> inviaCandidatura({
+    required int annuncioId,
+    required String nome,
+    required String cognome,
+    required String email,
+    required String cvNomeOriginale,
+    required List<int> cvBytes,
+  }) async {
+    if (token != null) {
+      throw const ApiException(
+        403,
+        'Effettua il logout per candidarti come visitatore.',
+      );
+    }
+
+    if (cvBytes.isEmpty) {
+      throw const ApiException(422, 'Seleziona un curriculum non vuoto.');
+    }
+
+    if (cvBytes.length > 5 * 1024 * 1024) {
+      throw const ApiException(413, 'Il curriculum supera il limite di 5 MiB.');
+    }
+
+    final dati = await _post('/api/annunci/$annuncioId/candidature', {
+      'nome': nome.trim(),
+      'cognome': cognome.trim(),
+      'email': email.trim(),
+      'cvNomeOriginale': cvNomeOriginale,
+      'cvBase64': base64Encode(cvBytes),
+    });
+
+    final id = dati['id'];
+
+    if (id is! int || id <= 0) {
+      throw const FormatException('Risposta di invio candidatura non valida.');
+    }
+
+    return id;
+  }
 }
