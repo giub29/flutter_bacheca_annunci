@@ -15,6 +15,7 @@ class MieiAnnunciScreen extends StatefulWidget {
 class _MieiAnnunciScreenState extends State<MieiAnnunciScreen> {
   late final ApiClient _api;
   late Future<List<Annuncio>> _annunci;
+  bool _uscitaInCorso = false;
 
   @override
   void initState() {
@@ -51,6 +52,47 @@ class _MieiAnnunciScreenState extends State<MieiAnnunciScreen> {
     }
   }
 
+  Future<void> _esci() async {
+    if (_uscitaInCorso) return;
+
+    final auth = context.read<AuthProvider>();
+
+    setState(() {
+      _uscitaInCorso = true;
+    });
+
+    try {
+      await auth.logout();
+
+      if (!mounted) return;
+
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    } on ApiException catch (errore) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(errore.message)),
+      );
+    } catch (_) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Logout non completato. '
+                'Controlla la connessione e riprova.',
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _uscitaInCorso = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
@@ -79,6 +121,11 @@ class _MieiAnnunciScreenState extends State<MieiAnnunciScreen> {
             onPressed: _apriNuovoAnnuncio,
             icon: const Icon(Icons.add),
             tooltip: 'Nuovo annuncio',
+          ),
+          IconButton(
+            onPressed: _uscitaInCorso ? null : _esci,
+            icon: const Icon(Icons.logout),
+            tooltip: 'Esci',
           ),
         ],
       ),
