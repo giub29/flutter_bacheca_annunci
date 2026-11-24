@@ -92,21 +92,3 @@ class _BachecaScreenState extends State<BachecaScreen> {
     );
   }
 }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Bacheca lavoro'),
-      ),
-      body: const Center(
-        child: Padding(
-          padding: EdgeInsets.all(24),
-          child: Text(
-            'Gli annunci di lavoro saranno mostrati qui.',
-            textAlign: TextAlign.center,
-          ),
-        ),
-      ),
-    );
-  }
